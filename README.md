@@ -27,7 +27,7 @@ Rent out the Claude / Codex / Grok subscription you already pay for, and get pai
 pnpm install && pnpm build && pnpm test
 ```
 
-272 tests, **no credentials and no network required** — the two pieces that
+312 tests, **no credentials and no network required** — the two pieces that
 touch Hedera (the facilitator and the HCS writer) are stubbed, so everything
 from a buyer's first request to a published receipt runs as production code.
 
@@ -55,7 +55,7 @@ Then the live proof, all on Hedera testnet and all openly readable:
 | ✅ **Deployed and public** | [landing](https://xorv.vercel.app) · [app](https://xorv-app.vercel.app) — a job paid for through the deployed app, above |
 | ✅ **Published to npm** | [`@xorv/cli`](https://www.npmjs.com/package/@xorv/cli) · [`@xorv/protocol`](https://www.npmjs.com/package/@xorv/protocol) · [`@xorv/mcp`](https://www.npmjs.com/package/@xorv/mcp) |
 | ✅ OS-level job sandbox | Seatbelt / bubblewrap / container — a hostile prompt cannot read the payout key |
-| ⚠️ Docker | Written, never built — Docker Desktop's VM would not start here |
+| ✅ Docker | Image built and run; a containerised broker settled a real job — [`0.0.9842030@1785993131.634335318`](https://hashscan.io/testnet/transaction/0.0.9842030-1785993131-634335318) |
 
 ---
 

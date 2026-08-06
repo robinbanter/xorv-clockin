@@ -26,6 +26,43 @@ interface StartOptions {
   quiet?: boolean;
 }
 
+/**
+ * Where to actually dial the control channel.
+ *
+ * The broker advertises a `wsUrl` built from its own `publicUrl`, and that is
+ * only correct when the broker's idea of its address matches how this node
+ * reached it. Behind a container port map, a tunnel, or any reverse proxy it
+ * does not: a broker in Docker publishing 8402 internally on host port 8500
+ * hands back `ws://localhost:8402`, which is a port that isn't there.
+ *
+ * The failure is nasty because it is silent. Registration and heartbeats are
+ * plain HTTP to the URL that worked, so the registry keeps reporting the node
+ * `online` while every dispatched job dies with "provider disconnected before
+ * the job could start".
+ *
+ * So: keep the broker's path and token — only it knows those — but take the
+ * origin from the URL this node actually reached the broker on. A client
+ * trusting a server's self-reported address over the one that just worked is
+ * the bug; this is the fix.
+ */
+export function controlChannelUrl(brokerUrl: string, advertised: string): string {
+  try {
+    const from = new URL(advertised);
+    const to = new URL(brokerUrl);
+    from.protocol = to.protocol === "https:" ? "wss:" : "ws:";
+    // hostname + port, not host: assigning `host` a portless value leaves any
+    // existing port in place, so a broker advertising ws://localhost:8402
+    // reached through an https tunnel would dial wss://tunnel-host:8402 — a
+    // port the tunnel does not serve. Set both explicitly.
+    from.hostname = to.hostname;
+    from.port = to.port;
+    return from.toString();
+  } catch {
+    // An unparseable advertisement is still better than nothing.
+    return advertised;
+  }
+}
+
 export async function startCommand(opts: StartOptions): Promise<void> {
   const config = requireConfig();
   if (opts.broker) config.brokerUrl = opts.broker;
@@ -95,7 +132,7 @@ export async function startCommand(opts: StartOptions): Promise<void> {
   let wsUrl: string;
   try {
     const result = await node.register(endpoint);
-    wsUrl = result.wsUrl;
+    wsUrl = controlChannelUrl(brokerUrl, result.wsUrl);
     reg.succeed(`registered as ${ui.c.bold(result.providerId)}`);
     if (result.registry) {
       ui.ok(

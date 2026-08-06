@@ -223,9 +223,15 @@ reading them here.
   the agent needs it to work. `XORV_SANDBOX=container` closes that too. On a
   host with neither seatbelt nor bubblewrap there is no filesystem boundary at
   all, and `xorv doctor` says so rather than printing the word "sandboxed".
-- **The Docker image is unbuilt.** `Dockerfile` and `docker-compose.yml` are
-  written and reviewed, but Docker Desktop's Linux VM would not start on this
-  machine, so the image has never been built. Treat it as untested.
+- ~~**The Docker image is unbuilt.**~~ **Closed.** Built and run (2.08GB,
+  `Up (healthy)`), and a containerised broker settled a real job end to end:
+  [`0.0.9842030@1785993131.634335318`](https://hashscan.io/testnet/transaction/0.0.9842030-1785993131-634335318).
+  Building it found a real bug that no amount of review would have: the broker
+  advertises its control-channel URL from its own `publicUrl`, which is wrong
+  behind any port map, tunnel or proxy — and the failure is silent, because
+  HTTP heartbeats keep working so the registry still reports the node `online`
+  while every dispatched job dies. The node now derives that URL from the
+  address it actually reached the broker on.
 - **The broker is not on Vercel.** It holds WebSocket connections and live
   registry state. For the demo it runs on the provider machine behind a
   Cloudflare tunnel; the tunnel URL changes on restart, so a redeploy of the app
